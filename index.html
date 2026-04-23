@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>Literárna Mapa Sveta - Kompletné Informácie</title>
+    <script src="https://unpkg.com/globe.gl"></script>
+    <style>
+        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #globeViz { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+
+        #panel {
+            position: fixed; top: 20px; right: 20px; width: 450px;
+            background: rgba(10, 25, 45, 0.98); color: white; padding: 25px;
+            border-radius: 15px; border: 2px solid #4fc3f7;
+            max-height: 85vh; overflow-y: auto; z-index: 99999;
+            display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        h1 { color: #4fc3f7; border-bottom: 2px solid #4fc3f7; margin-top: 0; font-size: 24px; padding-bottom: 8px; }
+        h2 { color: #4fc3f7; font-size: 17px; margin-top: 20px; text-transform: uppercase; border-left: 3px solid #4fc3f7; padding-left: 10px; }
+        h3 { color: #fff; font-size: 16px; margin-bottom: 5px; background: rgba(79, 195, 247, 0.2); padding: 5px; }
+        .info-section { margin-bottom: 15px; }
+        p, li { font-size: 14px; line-height: 1.5; color: #e0e0e0; margin-bottom: 8px; }
+        ul { padding-left: 20px; margin: 0; }
+        .close-btn { position: sticky; top: -10px; float: right; background: #ff5252; color: white;
+                     padding: 5px 12px; cursor: pointer; font-weight: bold; border-radius: 5px; z-index: 100; }
+
+        .clickable-label {
+            color: #4fc3f7; background: rgba(0,0,0,0.8); padding: 4px 10px;
+            border-radius: 8px; font-weight: bold; font-size: 12px;
+            cursor: pointer !important; border: 1px solid #4fc3f7;
+            white-space: nowrap; pointer-events: auto !important;
+         }
+        img {
+            width: 100%;            /* Zmenší šírku na 100% plochy panela */
+            max-width: 300px;      /* Zároveň povie, že nesmie byť širší ako 250px */
+            height: auto;         
+            max-height: 200px;     
+            object-fit: contain;   
+            border-radius: 10px;   
+            margin: 15px auto;     /* Prvé číslo je medzera hore/dole, 'auto' ho vycentruje */
+            display: block;        /* Nutné pre fungovanie centrovania cez 'margin auto' */
+        }
+        
+    </style>
+</head>
+<body>
+    <div style="position: absolute; bottom: 20px; left: 20px; color: white; z-index: 9999; font-family: Arial, sans-serif;">
+        Autori: Kravecová,Tkáčová,Ivanková,Lukačeňová,Balintová
+    </div>
+    <div id="globeViz"></div>
+    <div id="panel">
+        <div class="close-btn" onclick="document.getElementById('panel').style.display='none'">ZAVRIEŤ ×</div>
+        <div id="content"></div>
+    </div>
+
+<script>
+const gData = [
+        {
+            lat: 37.9, lng: 23.7, n: "Grécko",
+            text: `<h1>GRÉCKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>cca 800 až 700 pred n. l. → vznik eposov (ústna tradícia)</li>
+                    <li>8. – 5. stor. pred n. l. → rozkvet mestských štátov (Atény, Sparta)</li>
+                    <li>5. stor. pred n. l. → grécko-perzské vojny</li>
+                    <li>4. stor. pred n. l. → Alexander Veľký šíri grécku kultúru</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>mytológia (bohovia zasahujú do života ľudí)</li>
+                    <li>hrdinský ideál (Achilles)</li>
+                    <li>osudovosť/fatalizmus – človek nemôže uniknúť osudu</li>
+                </ul>
+                <p><b>Význam:</b> základ celej európskej literatúry, drámy a filozofie</p>
+                <h2>Autor: Homér (cca 800 – 700 p.n.l.)</h2>
+                <ul>
+                    <li>pôsobil v starovekom Grécku</li>
+                    <li>považovaný za najstaršieho známeho európskeho autora</li>
+                    <li>jeho diela formovali predstavu o Bohoch, vysvetľovali svet a morálku</li>
+                    <li><b>Homérska otázka:</b> hovorí o tom, že Homér nemusel vôbec existovať, resp. išlo o viacero autorov</li>
+                   <img src="https://zlatyfond.sme.sk/galeria/autor/396/homer01.web.jpg">
+                </ul>
+                <h2>Diela</h2>
+                <p><b>Ilias (8. stor. p.n.l.):</b> prvý veľký európsky epos; základ pre tragédiu a epiku; odohráva sa počas Trójskej vojny, zachytáva len krátke obdobie.</p>
+                <p><b>Odysea (7. stor. p.n.l.):</b> symbolizuje význam rozumu namiesto sily; opisuje 10-ročný návrat Odysea z Tróje plný dobrodružstiev.</p>
+            </div>`
+        },
+        {
+            lat: 41.9, lng: 12.5, n: "Taliansko",
+            text: `<h1>TALIANSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>476 → pád Západorímskej ríše</li>
+                    <li>5. až 14. stor. → stredovek, dominancia cirkvi</li>
+                    <li>1308 až 1320 → vznik Božskej komédie</li>
+                    <li>14. až 16. stor. → renesancia (Florencia)</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>silný vplyv kresťanstva a predstava posmrtného života (peklo, očistec, raj)</li>
+                    <li>silná moc cirkvi nad spoločnosťou</li>
+                    <li>vznik humanizmu (človek v centre záujmu)</li>
+                </ul>
+                <p><b>Význam:</b> prechod medzi stredovekom a renesanciou (medzi náboženskou a modernou literatúrou)</p>
+                <h2>Autor: Dante Alighieri (1265 – 1321)</h2>
+                <ul>
+                    <li>pôsobil vo Florencii; zakladateľ talianskej literárnej tradície</li>
+                    <li>spája kresťanské hodnoty s prvkami renesancie</li>
+                    <li>položil základy moderného talianskeho jazyka</li>
+            </div>
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Portrait_de_Dante.jpg">
+                </ul>
+                <h2>Dielo: Božská komédia</h2>
+                <ul>
+                    <li>Historické pozadie: Vznik v období stredoveku, vplyv kresťanstva.</li>
+                    <li>Kultúrne vplyvy: Alegorické zobrazenie posmrtného života (Raj, Peklo, Očistec). </li>
+                    <li>Význam: prechod medzi stredovekom a renesanciou.</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 51.5, lng: -0.1, n: "Anglicko",
+            text: `<h1>ANGLICKO</h1>
+            <div class="info-section">
+              <h2>Historické pozadie</h2>
+                <ul>
+                    <li>1485 až 1603 → vláda Tudorovcov</li>
+                    <li>1564 až 1616 → život Shakespeara</li>
+                    <li>18. až 19. stor. → priemyselná revolúcia</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>humanizmus(človek,jeho vnútro)</li>
+                    <li>rozvoj divadla(Londýn)</li>
+                    <li>spoločenské rozdiely(vyššia vs. nižšia trieda)</li>
+                </ul>
+                <h2>Autor: William Shakespeare(1564 – 1616)</h2>
+                <ul>
+                    <li>pôsobil v Anglicku počas vlády Alžbety I.</li>
+                    <li>je považovaný za najvýznamnejšieho anglického dramatika</li>
+                    <li>jeho diela skúmajú lásku, moc, smrť a ľudské psychológie</li>
+                    <li>významne ovplyvnil divadlo a literatúru renesančnej Európy</li>
+                    <li>jeho jazyk a postavy sa stali univerzálnymi archetypmi</li>
+            </div>
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Shakespeare.jpg/400px-Shakespeare.jpg">
+                </ul>
+                <h2>Dielo: Hamlet</h2>
+                <ul>
+                    <li>Historické pozadie: renesancia, rozvoj divadla</li>
+                    <li>Kultúrne vplyvy: humanizmus, dôraz na človeka</li>
+                    <li>Význam: univerzálne témy (láska, moc, smrť)</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 48.8, lng: 2.3, n: "Francúzsko",
+            text: `<h1>FRANCÚZSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>1789 → Francúzska revolúcia</li>
+                    <li>1804 až 1815 → Napoleonova éra</li>
+                    <li>1830, 1848 → revolúcie vo Francúzsku </li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li> boj za slobodu, rovnosť, bratstvo </li>
+                    <li>kritika sociálnych rozdielov</li>
+                    <li>dôraz na spravodlivosť</li>
+                </ul>
+                <h2>Autor: Victor Hugo (1802 až 1885)</h2>
+                <ul>
+                    <li>pôsobil vo Francúzsku</li>
+                    <li>významný predstaviteľ romantizmu a sociálnej kritiky</li>
+                    <li>jeho diela zobrazujú sociálnu nespravodlivosť a utrpenie chudobných</li>
+                    <li>ovplyvnila ho Francúzska revolúcia (1789) a industrializácia </li>
+                    <li>jeho práca formovala francúzsku literatúru 19. storočia</li>
+             </div>
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/d/dc/Victor_Hugo_by_%C3%89tienne_Carjat_1876_-_colorized.png">
+                </ul>
+                <h2>Dielo: Bedári(1862)</h2>
+                <ul>
+                    <li>Historické pozadie:  Francúzska revolúcia, sociálne nepokoje </li>
+                    <li>Kultúrne vplyvy: boj za spravodlivosť, rovnosť </li>
+                    <li>Význam: kritika spoločnosti </li>
+                </ul>
+            </div>`   
+        },
+        {
+            lat: 52.5, lng: 13.4, n: "Nemecko",
+            text: `<h1>NEMECKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>18. stor. → osvietenstvo</li>
+                    <li>1749 až 1832 → život Goetheho</li>
+                    <li>1808 → prvá časť Fausta</li>
+                    <li>1871 → zjednotenie Nemecka</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>túžba po poznaní a vede</li>
+                    <li>konflikt dobra a zla</li>
+                </ul>
+                <h2>Autor: Johann Wolfgang von Goethe (1749 až 1832)</h2>
+                <ul>
+                    <li>pôsobil v Nemecku</li>
+                    <li>významný predstaviteľ romantizmu a filozofickej literatúry</li>
+                    <li>jeho diela, hlavne Faust, Utrpenie mladého Werthera skúmajú ľudskú psychológiu, túžbu po poznaní a konflikt dobra so zlom </li>
+                    <li>ovplyvnený osvietenstvom a industrializáciou</li>
+                    <li>patrí k najväčším nemeckým autorom</li>
+            </div>
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Goethe_%28Stieler_1828%29.jpg/250px-Goethe_%28Stieler_1828%29.jpg">
+                </ul>
+                <h2>Dielo: Faust(1808)</h2>
+                <ul>
+                    <li>Historické pozadie:  osvietenstvo a romantizmus</li>
+                    <li>Kultúrne vplyvy: túžba po poznaní, konflikt dobra a zla</li>
+                    <li>Význam: filozofická literatúra</li>
+                </ul>
+            </div>`           
+        },
+        {
+            lat: 50.0, lng: 14.4, n: "Česko",
+            text: `<h1>ČESKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>1867 až 1918 → Rakúsko-Uhorsko</li>
+                    <li>1914 až 1918 → 1. svetová vojna </li>
+                    <li>1918 → vznik Československa</li>
+                    <li>1939 až 1945 → nacistická okupácia</li>     
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>byrokracia a anonymita</li>
+                    <li>odcudzenie človeka</li>
+                    <li>neistota modernej doby</li>
+                </ul>
+                <h2>Autor: Franz Kafka(1883 až 1924)</h2>
+                <ul>
+                    <li>pôsobil v Prahe, v Rakúsko-Uhorsku</li>
+                    <li>písal nemecky, patrí k najvýznamnejším modernistom</li>
+                    <li>jeho dielo Proces zobrazuje byrokratickú absurditu a odcudzenie jednotlivca</li>
+                    <li>ovplyvnený politickým tlakom a sociálnymi normami rakúsko-uhorského systému</li>
+                    <li>jeho štýl ovplyvnil existencializmus a absurdnú literatúru</li>
+            </div>
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/b/b4/Kafka.jpg">
+                </ul>
+                <h2>Dielo: Proces(1914)</h2>
+                <ul>
+                    <li>Historické pozadie:  Rakúsko-Uhorsko, byrokracia</li>
+                    <li>Kultúrne vplyvy: odcudzenie, neistota</li>
+                    <li>Význam: absurdita moderného sveta</li>
+                </ul>
+            </div>`   
+        },
+        {
+            lat: 56.3, lng: 92.53, n: "Rusko",
+            text: `<h1>RUSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>19. storočie → cárske Rusko (chudoba, nerovnosť)</li>
+                    <li>1821 až 1881 → život Dostojevského</li>
+                    <li>1917 → Ruská revolúcia</li>
+                    <li>1917 až 1991 → Sovietsky zväz</li>     
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>silná religiozita (pravoslávie)</li>
+                    <li>morálne dilemy (vina, trest)</li>
+                    <li>sociálne rozdiely </li>
+                </ul>
+                <h2>Autor: Fjodor Michajlovič Dostojevskij (1821 až 1881)</h2>
+                <ul>
+                    <li>pôsobil v Rusku</li>
+                    <li>autor psychologických a filozofických románov</li>
+                    <li>doraz na morálne dilemy a psychológiu postáv</li>
+                    <li>ovplyvnený cárskym Ruskom, sociálnymi rozdielmi a zrušením nevoľníctva (1861)</li>
+                    <li>patrí medzi najväčších ruských realistov</li>
+            </div>
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Dostoevsky_1872.jpg">
+                </ul>
+                <h2>Dielo: Zločin a trest(1866)</h2>
+                <ul>
+                    <li>Historické pozadie: cárske Rusko, sociálne rozdiely </li>
+                    <li>Kultúrne vplyvy: náboženstvo, morálka </li>
+                    <li>Význam: psychológia postáv </li>
+                </ul>
+            </div>` 
+        },  
+        {
+            lat: 48.6, lng: 19.1, n: "Slovensko",
+            text: `<h1>SLOVENSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>19. storočie → národné obrodenie </li>
+                    <li>1843 → kodifikácia spisovnej slovenčiny </li>
+                    <li>snaha o zachovanie identity v Uhorsku </li>   
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>vlastenectvo</li>
+                    <li>dedinský život</li>
+                    <li>tradície</li>
+                </ul>
+                <h2>Autor: Martin Kukučín(1860 až 1928)</h2>
+                <ul>
+                    <li>pôsobil na Slovensku a v zahraničí (Chorvátsko, Rumunsko)</li>
+                    <li>autor realistických próz</li>
+                    <li>v dielach zobrazuje dedinský život a slovenskú spoločnosť</li>
+                    <li>ovplyvnený národným obrodením a Uhorskom</li>
+                    <li>patrí medzi zakladateľov modernej slovenskej literatúry</li>
+            </div>
+                   <img src="https://www.litcentrum.sk/sites/default/files/news_images/kukucin_1.jpg">
+                </ul>
+                <h2>Dielo: Dom v stráni(1961)</h2>
+                <ul>
+                    <li>Historické pozadie: národné obrodenie </li>
+                    <li>Kultúrne vplyvy: dedinský život, identita </li>
+                    <li>Význam: realistická slovenská literatúra </li>
+                </ul>
+            </div>` 
+            
+        },
+        {
+            lat: 4.5, lng: -74.2, n: "Kolumbia",
+            text: `<h1>KOLUMBIA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>20. storočie → politická nestabilita</li>
+                    <li>latinskoamerický „boom“</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>magický realizmus</li>
+                    <li>fantázia</li>
+                    <li>tradície</li>
+                </ul>
+                <h2>Autor: Gabriel García Márquez (1927 – 2014)</h2>
+                <ul>
+                    <li>kolumbijský autor</li>
+                    <li>nositeľ Nobelovej ceny</li>
+                    <li>predstaviteľ magického realizmu</li>
+                    <li>svetoznámy spisovateľ</li>
+                    <li>významná osobnosť</li>
+            </div>
+                   <img src="https://static01.nyt.com/images/2013/08/01/automobiles/Marquez-Gabriel-adv-obit-slide-LP84/Marquez-Gabriel-adv-obit-slide-LP84-superJumbo-v5.jpg">
+                </ul>
+                <h2>Dielo: Sto rokov samoty (1967)</h2>
+                <ul>
+                    <li>Historické pozadie: vývoj Latinskej Ameriky a spoločenské zmeny </li>
+                    <li>Kultúrne vplyvy:  fantázia,rodina a tradície</li>
+                    <li>Význam: vrchol magického realizmu </li>
+                </ul>
+            </div>` 
+        },
+        {
+            lat: 37.0, lng: -95.7, n: "USA",
+            text: `<h1>USA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>20. storočie → rozvoj</li>
+                    <li>1920s → zlaté roky</li>
+                    <li>1929 → hospodárska kríza</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>americký sen</li>
+                    <li>individualizmus</li>
+                    <li>liberalizmus</li>
+                    <li>sklamanie</li>
+                </ul>
+                <h2>Autor: F. Scott Fitzgerald (1896 až 1940)</h2>
+                <ul>
+                    <li>americký spisovateľ</li>
+                    <li>predstaviteľ stratenej generácie</li>
+                    <li>kritik spoločnosti</li>
+                    <li>zobrazoval bohatstvo</li>
+                    <li>významný autor</li>
+            </div>
+                   <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-HFn6NbfBJ8nr2sDoyQ8rcRYqphyCS2-RVQ&s.JPG">
+                </ul>
+                <h2>Dielo: Sto rokov samoty (1967)</h2>
+                <ul>
+                    <li>Historické pozadie: vývoj Latinskej Ameriky a spoločenské zmeny </li>
+                    <li>Kultúrne vplyvy:  fantázia,rodina a tradície</li>
+                    <li>Význam: vrchol magického realizmu </li>
+                </ul>
+            </div>` 
+        },
+        {
+            lat: 9.0, lng: 8.6, n: "Nigéria",
+            text: `<h1>NIGÉRIA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>19. storočie → britská kolonizácia </li>
+                    <li>1960 → nezávislosť </li>
+                    <li>po nezávislosti → spoločenské zmeny </li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>tradičné kmene a zvyky</li>
+                    <li>stret s európskou kultúrou</li>
+                    <li>koloniálny vplyv</li>
+                </ul>
+                <h2>Autor: Chinua Achebe (1930 až 2013) </h2>
+                <ul>
+                    <li>nigérijský spisovateľ</li>
+                    <li>zobrazoval rozpad tradičnej spoločnosti</li>
+                    <li>kritik kolonializmu</li>
+                    <li>písal v angličtine</li>
+                    <li>významný predstaviteľ africkej literatúry</li>
+            </div>
+                    <img src="https://www.theparisreview.org/il/e4b8f842fe/medium/Chinua-Achebe.jpg">
+                </ul>
+                <h2>Dielo: Veci sa rozpadávajú (1958)</h2>
+                <ul>
+                    <li>Historické pozadie: príchod Európanov do Afriky a rozpad tradičnej spoločnosti</li>
+                    <li>Kultúrne vplyvy: konflikt tradície a modernity, kmeňové hodnoty a náboženstvo</li>
+                    <li>Význam: kritika kolonializmu</li>
+                </ul>
+            </div>`
+        },  
+        {
+            lat: 61.9, lng: 25.7, n: "Fínsko",
+            text: `<h1>FÍNSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>19. stor. → obrodenie </li>
+                    <li> 1917 nezávislosť </li>
+                    <li>národná identita </li>
+
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>príroda </li>
+                    <li>mytológia </li>
+                    <li>folklór </li>
+                </ul>
+                <h2>Autor: Elias Lönnrot (1802 až 1884)</h2>
+                <ul>
+                    <li>zberateľ folklóru </li>
+                    <li>fínsky autor </li>
+                    <li>tvorca eposu </li>
+                    <li>významná osobnosť </li>
+                    <li>národný symbol </li>
+
+            </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Elias_L%C3%B6nnrot_by_Reinhold.jpeg/250px-Elias_L%C3%B6nnrot_by_Reinhold.jpeg">
+                </ul>
+                <h2>Dielo: Kalevala (1835)</h2>
+                <ul>
+                    <li>Historické pozadie: zber ľudových piesní</li>
+                    <li>Kultúrne vplyvy: mytológia,príroda a traficie</li>
+                    <li>Význam: posilnenie identity</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: -30.5, lng: 22.9, n: "Južná Afrika",
+            text: `<h1>JUŽNÁ AFRIKA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>kolonizácia </li>
+                    <li>apartheid </li>
+                    <li>demokracia </li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>rasové problémy </li>
+                    <li>miešanie kultúr </li>
+                    <li>politika </li>
+                </ul>
+                <h2>Autor: Nadine Gordimer (1923 – 2014)</h2>
+                <ul>
+                    <li>juhoafrická autorka </li>
+                    <li>Nobelova cena </li>
+                    <li>kritika apartheidu </li>
+                    <li>politické témy </li>
+                    <li>významná osobnosť </li>
+            </div>
+                    <img src="https://static01.nyt.com/images/2014/07/15/arts/GORDIMER/GORDIMER-superJumbo-v3.jpg">
+                </ul>
+                <h2>Dielo: Burgerova dcéra (1979)</h2>
+                <ul>
+                    <li>Historické pozadie: politický boj</li>
+                    <li>Kultúrne vplyvy: sloboda,politika a identita</li>
+                    <li>Význam: morálne otázky</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: -1.29, lng: 36.82, n: "Keňa",
+            text: `<h1>KEŇA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>britská kolónia</li>
+                    <li>1963 → nezávislosť</li>
+                    <li>problémy po nezávislosti</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>kolonializmus</li>
+                    <li>sociálne nerovnosti</li>
+                    <li>tradičné hodnoty</li>
+                </ul>
+                <h2>Autor: Ngũgĩ wa Thiong’o (1938)</h2>
+                <ul>
+                    <li>keňský autor</li>
+                    <li>kritik politiky</li>
+                    <li>písal aj v rodnom jazyku</li>
+                    <li>bojoval proti kolonializmu</li>
+                    <li>významný africký spisovateľ</li>
+                </ul>
+            </div>
+                    <img src="https://news.uci.edu/files/2019/11/Ngugi_100819_0279_sz.jpg">
+                <h2>Dielo: Okvetné lístky krvi (1977)</h2>
+                <ul>
+                    <li>Historické pozadie: obdobie po nezávislosti, korupcia a problémy štátu</li>
+                    <li>Kultúrne vplyvy: sociálna nespravodlivosť, politika, tradície</li>
+                    <li>Význam: realistické zobrazenie Afriky</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 35.69, lng: 139.69, n: "Japonsko",
+            text: `<h1>JAPONSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>Heian obdobie (10.–12. stor.)</li>
+                    <li>cisársky dvor</li>
+                    <li>rozvoj kultúry</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>estetika a krása</li>
+                    <li>príroda</li>
+                    <li>dvorský život</li>
+                </ul>
+                <h2>Autor: Murasaki Šikibu (cca 973 – 1014)</h2>
+                <ul>
+                    <li>dvorná dáma</li>
+                    <li>autorka prvého románu</li>
+                    <li>písala o aristokracii</li>
+                    <li>zobrazovala city a vzťahy</li>
+                    <li>významná osobnosť literatúry</li>
+                </ul>
+            </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Murasaki-Shikibu-composing-Genji-Monogatari.png">
+                <h2>Dielo: Príbeh o Genji</h2>
+                <ul>
+                    <li>Historické pozadie: život na cisárskom dvore a obdobie mieru</li>
+                    <li>Kultúrne vplyvy: estetika, spoločenské normy, láska a vzťahy</li>
+                    <li>Význam: prvý román na svete</li>
+                </ul> 
+            </div>`
+        },
+        {
+            lat: 39.90, lng: 116.40, n: " Čína",
+            text: `<h1>ČÍNA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>starovek</li>
+                    <li>obdobie vojnových štátov</li>
+                    <li>rozvoj filozofie</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>konfucianizmus</li>
+                    <li>stratégia</li>
+                    <li>filozofia</li>
+                </ul>
+                <h2>Autor: Sun-c’ (cca 544 – 496 pred n. l.)</h2>
+                <ul>
+                    <li>vojenský stratég</li>
+                    <li>filozof</li>
+                    <li>autor strategického diela</li>
+                    <li>ovplyvnil vojenské myslenie</li>
+                    <li>významná historická osobnosť</li>
+                </ul>
+            </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/56/Portrait_of_Xun_Zi.jpg">
+                <h2>Dielo: Umenie vojny</h2>
+                <ul>
+                    <li>Historické pozadie: vojny medzi štátmi a potreba stratégie</li>
+                    <li>Kultúrne vplyvy: vojenské myslenie, filozofia a taktika</li>
+                    <li>Význam: základ vojenskej stratégie, ktorý má využitie aj dnes</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 24.71, lng: 46.67, n: " Blízky východ",
+            text: `<h1>BLÍZKY VÝCHOD</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>staroveké civilizácie</li>
+                    <li>islamská kultúra</li>
+                    <li>obchodné cesty</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>islam</li>
+                    <li>rozprávačská tradícia</li>
+                    <li>múdrosť</li>
+                </ul>
+                <h2>Autor: anonym</h2>
+                <ul>
+                    <li>neznámy autor</li>
+                    <li>ústna tradícia</li>
+                    <li>viacerí rozprávači</li>
+                    <li>prenášanie príbehov</li>
+                    <li>kultúrne dedičstvo</li>
+                </ul>
+            </div>
+                    <img src="https://www.databazeknih.cz/img/books/16_/163541/bmid_tisic-a-jedna-noc-WxK-163541.jpg">
+                <h2>Dielo: Tisíc a jedna noc</h2>
+                <ul>
+                    <li>Historické pozadie: orientálny svet</li>
+                    <li>Kultúrne vplyvy: rozprávky, fantázia a múdrosť</li>
+                    <li>Význam: kultúrne dedičstvo</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: -33.44, lng: -70.66, n: " Čile",
+            text: `<h1>ČILE</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>20. stor.</li>
+                    <li>politické zmeny</li>
+                    <li>rozvoj poézie</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>láska</li>
+                    <li>príroda</li>
+                    <li>politika</li>
+                </ul>
+                <h2>Autor: Pablo Neruda (1904 – 1973)</h2>
+                <ul>
+                    <li>čilský básnik</li>
+                    <li>Nobelova cena</li>
+                    <li>politicky angažovaný</li>
+                    <li>významný autor</li>
+                    <li>svetová poézia</li>
+                </ul>
+            </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Pablo_Neruda_1963.jpg">
+                <h2>Dielo: Dvadsať milostných básní a pieseň zúfalstva (1924)</h2>
+                <ul>
+                    <li>Historické pozadie: obdobie medzi vojnami</li>
+                    <li>Kultúrne vplyvy: láska, city a príroda</li>
+                    <li>Význam: silné emócie</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 45.42, lng: -75.69, n: " Kanada",
+            text: `<h1>KANADA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>britský a francúzsky vplyv</li>
+                    <li>20. stor. → identita</li>
+                    <li>multikultúrna spoločnosť</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>príroda</li>
+                    <li>rôzne kultúry</li>
+                    <li>spoločnosť</li>
+                </ul>
+                <h2>Autor: Margaret Atwood (1939)</h2>
+                <ul>
+                    <li>kanadská autorka</li>
+                    <li>svetoznáma</li>
+                    <li>feministické témy</li>
+                    <li>kritika spoločnosti</li>
+                    <li>významná osobnosť</li>
+                </ul>
+            </div>
+                    <img src="https://i0.wp.com/www.chronogram.com/wp-content/uploads/2025/10/Margaret-Atwood.jpg?fit=1200%2C822&ssl=1">
+                <h2>Dielo: Príbeh služobníčky (1985)</h2>
+                <ul>
+                    <li>Historické pozadie: moderná spoločnosť a totalitné prvky</li>
+                    <li>Kultúrne vplyvy: postavenie žien, moc a spoločnosť</li>
+                    <li>Význam: varovanie pred totalitou</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: -15.82, lng: -47.92, n: " Brazília",
+            text: `<h1>BRAZÍLIA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>portugalská kolónia</li>
+                    <li>nezávislosť</li>
+                    <li>modernizmus</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>miešanie kultúr</li>
+                    <li>spiritualita</li>
+                    <li>spoločnosť</li>
+                </ul>
+                <h2>Autor: Paulo Coelho (1947)</h2>
+                <ul>
+                    <li>brazílsky autor</li>
+                    <li>svetoznámy</li>
+                    <li>filozofické témy</li>
+                    <li>jednoduchý štýl</li>
+                    <li>populárny spisovateľ</li>
+                </ul>
+            </div>
+                    <img src="https://www.booxy.sk/authors/paulo-coelho-60092.jpg">
+                <h2>Dielo: Alchymista (1988)</h2>
+                <ul>
+                    <li>Historické pozadie: moderná doba a putovanie</li>
+                    <li>Kultúrne vplyvy: sny, osud a spiritualita</li>
+                    <li>Význam: motivačné dielo</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 34.029, lng: -6.84, n: " Maroko",
+            text: `<h1>MAROKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>arabská kultúra</li>
+                    <li>francúzska kolonizácia</li>
+                    <li>moderný vývoj</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>islam</li>
+                    <li>tradície</li>
+                    <li>modernita</li>
+                </ul>
+                <h2>Autor: Tahar Ben Jelloun (1944)</h2>
+                <ul>
+                    <li>marocký autor</li>
+                    <li>píše po francúzsky</li>
+                    <li>rieši identitu</li>
+                    <li>kritika spoločnosti</li>
+                    <li>významný autor</li>
+            </div>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Tahar_Ben_Jelloun_par_Claude_Truong-Ngoc_sept_2013.jpg/960px-Tahar_Ben_Jelloun_par_Claude_Truong-Ngoc_sept_2013.jpg">  
+                <ul>
+                <h2>Dielo: Posledný priateľ</h2>
+                <ul>
+                    <li>Historické pozadie: spoločenské zmeny</li>
+                    <li>Kultúrne vplyvy: priateľstvo, spoločnosť a identita</li>
+                    <li>Význam: analýza vzťahov a spoločenská kritika</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: -23.69, lng: 133.88, n: " Austrália",
+            text: `<h1>AUSTRÁLIA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>britská kolónia</li>
+                    <li>20. stor. → identita</li>
+                    <li>rozvoj štátu</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>príroda</li>
+                    <li>izolácia</li>
+                    <li>pôvodní obyvatelia</li>
+                </ul>
+                <h2>Autor: Patrick White (1912 – 1990)</h2>
+                <ul>
+                    <li>austrálsky autor</li>
+                    <li>Nobelova cena</li>
+                    <li>filozofický štýl</li>
+                    <li>významný spisovateľ</li>
+                    <li>zobrazoval Austráliu</li>
+                </ul>
+            </div>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCkIGIKWkYiYcwbUWdMKa3oQia0XjpJja5lA&s">
+                </ul>
+                <h2>Dielo: Voss (1957)</h2>
+                <ul>
+                    <li>Historické pozadie: objavovanie Austrálie</li>
+                    <li>Kultúrne vplyvy: príroda, samota a skúmanie</li>
+                    <li>Význam: filozofické dielo</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 28.61, lng: 77.20, n: " India",
+            text: `<h1>INDIA</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>starovek</li>
+                    <li>britská kolonizácia</li>
+                    <li>1947 nezávislosť</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>náboženstvo</li>
+                    <li>tradície</li>
+                    <li>spiritualita</li>
+                </ul>
+                <h2>Autor: Rabíndranáth Thákur (1861 – 1941)</h2>
+                <ul>
+                    <li>indický autor</li>
+                    <li>Nobelova cena</li>
+                    <li>básnik</li>
+                    <li>filozof</li>
+                    <li>významná osobnosť</li>
+                </ul>
+            </div>
+                </ul>
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNUm7PCDrmhwN3j-kBEk6myVtX3-Eef0cwaw&s">
+                <h2>Dielo: Gítándžalí</h2>
+                <ul>
+                    <li>Historické pozadie: koloniálne obdobie, duchovné hľadanie</li>
+                    <li>Kultúrne vplyvy: náboženstvo, spiritualita a príroda</li>
+                    <li>Význam: duchovná poézia</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 34.55, lng: 69.20, n: " Afganistan",
+            text: `<h1>AFGANISTAN</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>vojny</li>
+                    <li>konflikty</li>
+                    <li>moderná história</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>islam</li>
+                    <li>rodina</li>
+                    <li>tradície</li>
+                </ul>
+                <h2>Autor: Khaled Hosseini (1965)</h2>
+                <ul>
+                    <li>afganský autor</li>
+                    <li>žije v USA</li>
+                    <li>píše o vojne</li>
+                    <li>zobrazuje emócie</li>
+                    <li>svetoznámy</li>
+                </ul>
+            </div>
+                    <img src="https://ew.com/thmb/Gu1Oed36UcLa62Zmyqbz7MDG0Jc=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/khaled-hosseini-1-2000-60b47db3e08e482d958b0625fa2271ab.jpg">
+                </ul>
+                <h2>Dielo: Lovec šarkanov (2003)</h2>
+                <ul>
+                    <li>Historické pozadie: vojnové obdobie, Taliban</li>
+                    <li>Kultúrne vplyvy: priateľstvo, vina a rodina</li>
+                    <li>Význam: silný príbeh s realistickým zobrazením</li>
+                </ul>
+            </div>`
+        },
+        {
+            lat: 13.75, lng: 100.50, n: " Thajsko",
+            text: `<h1>THAJSKO</h1>
+            <div class="info-section">
+                <h2>Historické pozadie</h2>
+                <ul>
+                    <li>monarchia</li>
+                    <li>tradičný štát</li>
+                    <li>modernizácia</li>
+                </ul>
+                <h2>Kultúrne vplyvy</h2>
+                <ul>
+                    <li>buddhizmus</li>
+                    <li>tradície</li>
+                    <li>folklór</li>
+                </ul>
+                <h2>Autor: anonym / tradiční autori</h2>
+                <ul>
+                    <li>ústna tradícia</li>
+                    <li>neznámi autori</li>
+                    <li>folklór</li>
+                    <li>eposy</li>
+                    <li>kultúrne dedičstvo</li>
+                </ul>
+            </div>
+                    <img src="https://media.istockphoto.com/id/1190638299/photo/thai-mural-fresco-of-ramakien-epic-at-the-grand-palace-in-bangkok-thailand.jpg?s=170667a&w=0&k=20&c=2bdPHN5c0IIsY_TwXi3LntEjdy_LQxwl-T-LSZv7o9o=">
+                <h2>Dielo: tradičné eposy</h2>
+                <ul>
+                    <li>Historické pozadie: kráľovské dvory</li>
+                    <li>Kultúrne vplyvy: náboženstvo, legendy a kultúra</li>
+                    <li>Význam: zachovanie tradícií</li>
+                </ul>
+            </div>`
+        },       
+    ]
+
+    const world = Globe()(document.getElementById('globeViz'))
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+        .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+        .pointerEventsFilter(() => false)
+        .htmlElementsData(gData)
+        .htmlElement(d => {
+            const el = document.createElement('div');
+            el.innerHTML = d.n;
+            el.className = 'clickable-label';
+            el.onclick = (event) => {
+                event.stopPropagation();
+                const panel = document.getElementById('panel');
+                document.getElementById('content').innerHTML = d.text;
+                panel.style.display = 'block';
+                panel.scrollTop = 0;
+            };
+            return el;
+        })
+        .htmlLat(d => d.lat)
+        .htmlLng(d => d.lng);
+
+    world.controls().autoRotate = true;
+    world.controls().autoRotateSpeed = 0.5;
+</script>
+</body>
+</html>
